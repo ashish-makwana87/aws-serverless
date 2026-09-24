@@ -13,6 +13,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -30,13 +33,24 @@ jobs:
         env:
           NODE_ENV: test
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
-          DB_NAME: AwsFinanceApp
-          TEST_DB_NAME: AwsFinanceTest
+          DB_NAME: aws_serverless
+          TEST_DB_NAME: aws_serverless_test
         run: npm test
       
       - name: Build Docker image
         run: docker buildx build --platform linux/amd64 --provenance=false -t aws-serverless-project:ci .
 
+      - name: Check Terraform formatting
+        run: terraform -chdir=terraform fmt -check -recursive
+      
+      - name: Initialize Terraform
+        run: terraform -chdir=terraform init -backend=false
+
+      - name: Validate Terraform
+        run: terraform -chdir=terraform validate
+
       - name: CI completed
         run: echo "CI job completed successfully."
+
+
 
