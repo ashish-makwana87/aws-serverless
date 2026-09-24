@@ -139,7 +139,7 @@ resource "aws_iam_policy" "lambda_secrets_policy" {
         ]
 
         Resource = [
-          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:aws-serverless-project/dev*"
+          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:aws-serverless/dev*"
         ]
       }
     ]

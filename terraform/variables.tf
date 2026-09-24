@@ -13,7 +13,7 @@ variable "service_name" {
 variable "project_name" {
   description = "Project name"
   type        = string
-  default     = "aws-finance-overview"
+  default     = "aws-serverless"
 }
 
 variable "environment" {
@@ -66,4 +66,19 @@ variable "avatar_allowed_types" {
   type        = string
   description = "Allowed avatar MIME types"
 }
+
+variable "lambda_image_uri" {
+  description = "ECR image URI used by Lambda functions"
+  type        = string
+}
+
+
+
+
+
+
+
+
+
+
 

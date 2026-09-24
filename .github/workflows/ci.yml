@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, uat, stage, 'feature-*' ]
+    branches: [main, uat, stage, "feature-*"]
   pull_request:
-    branches: [ main, uat, stage ]
+    branches: [main, uat, stage]
 
 jobs:
   basic-ci:
@@ -18,26 +18,25 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run lint
         run: npm run lint
 
-      - name: Run test suite 
+      - name: Run test suite
         env:
           NODE_ENV: test
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           DB_NAME: AwsFinanceApp
           TEST_DB_NAME: AwsFinanceTest
         run: npm test
-
-      # Try building/packaging ONLY if serverless is available
-      - name: Try serverless package (optional)
-        run: |
-          npx serverless --version && npx serverless package || echo "Serverless not available or no package step."
+      
+      - name: Build Docker image
+        run: docker buildx build --platform linux/amd64 --provenance=false -t aws-serverless-project:ci .
 
       - name: CI completed
         run: echo "CI job completed successfully."
+
