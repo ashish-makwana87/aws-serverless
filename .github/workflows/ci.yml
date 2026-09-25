@@ -18,7 +18,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Debug OIDC claim
+      - name: Debug OIDC claims
         shell: bash
         run: |
           TOKEN=$(curl -sS \
