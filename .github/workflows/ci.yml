@@ -28,11 +28,19 @@ jobs:
 
           echo "$TOKEN" | cut -d '.' -f 2 | base64 -d 2>/dev/null | jq .
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          role-to-assume: arn:aws:iam::460783431820:role/GitHubActionsCIRole
-          aws-region: ap-south-1
+      - name: Test AWS STS directly
+        shell: bash
+        run: |
+          TOKEN=$(curl -sS \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            $ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" \
+            | jq -r '.value')
+
+          aws sts assume-role-with-web-identity \
+            --role-arn arn:aws:iam::460783431820:role/GitHubActionsCIRole \
+            --role-session-name github-oidc-test \
+            --web-identity-token "$TOKEN" \
+            --duration-seconds 900
       
       - name: Verify AWS identity
         run: aws sts get-caller-identity
