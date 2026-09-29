@@ -59,6 +59,9 @@ jobs:
 
       - name: Validate Terraform
         run: terraform -chdir=terraform validate
+      
+      - name: Terraform plan
+        run: terraform -chdir=terraform plan -var="lambda_image_uri=460783431820.dkr.ecr.ap-south-1.amazonaws.com/aws-api-dev:dev"
 
       - name: CI completed
         run: echo "CI job completed successfully."
