@@ -14,9 +14,6 @@ jobs:
       id-token: write
       contents: read
 
-    env:
-      ACTIONS_STEP_DEBUG: true
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
@@ -27,9 +24,6 @@ jobs:
           role-to-assume: arn:aws:iam::460783431820:role/GitHubActionsCIRole
           aws-region: ap-south-1
           role-session-name: github-actions-ci
-
-      - name: Verify AWS identity
-        run: aws sts get-caller-identity
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3.1.2
@@ -61,7 +55,7 @@ jobs:
         run: terraform -chdir=terraform fmt -check -recursive
       
       - name: Initialize Terraform
-        run: terraform -chdir=terraform init -backend=false
+        run: terraform -chdir=terraform init
 
       - name: Validate Terraform
         run: terraform -chdir=terraform validate
