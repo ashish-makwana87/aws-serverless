@@ -13,7 +13,18 @@ jobs:
     permissions:
       id-token: write
       contents: read
-
+    
+    env:
+      TF_VAR_mongodb_uri: ${{ secrets.MONGODB_URI }}
+      TF_VAR_db_name: aws_serverless
+      TF_VAR_jwt_exp: 15m
+      TF_VAR_cloudfront_url: d3pbrmz5mjug3w.cloudfront.net
+      TF_VAR_sqs_queue_url: https://sqs.ap-south-1.amazonaws.com/460783431820/avatar-processing-dev
+      TF_VAR_profile_cache_table: ProfileCache
+      TF_VAR_storage_provider: s3
+      TF_VAR_avatar_max_size_mb: "5"
+      TF_VAR_avatar_allowed_types: "image/jpeg,image/png,image/webp"
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
@@ -59,9 +70,9 @@ jobs:
 
       - name: Validate Terraform
         run: terraform -chdir=terraform validate
-      
+
       - name: Terraform plan
-        run: terraform -chdir=terraform plan -var="lambda_image_uri=460783431820.dkr.ecr.ap-south-1.amazonaws.com/aws-api-dev:dev"
+        run: terraform -chdir=terraform plan -input=false -var="lambda_image_uri=460783431820.dkr.ecr.ap-south-1.amazonaws.com/aws-api-dev:dev"
 
       - name: CI completed
         run: echo "CI job completed successfully."
