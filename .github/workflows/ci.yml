@@ -2,42 +2,153 @@ name: CI
 
 on:
   push:
-    branches: [ main, uat, stage, 'feature-*' ]
+    branches:
+      - "feature/**"
   pull_request:
-    branches: [ main, uat, stage ]
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches: 
+      - main
 
 jobs:
   basic-ci:
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write
+      contents: read
+    
+    env:
+      TF_VAR_mongodb_uri: ${{ secrets.MONGODB_URI }}
+      TF_VAR_db_name: aws_serverless
+      TF_VAR_jwt_exp: 15m
+      TF_VAR_cloudfront_url: d3pbrmz5mjug3w.cloudfront.net
+      TF_VAR_sqs_queue_url: https://sqs.ap-south-1.amazonaws.com/460783431820/avatar-processing-dev
+      TF_VAR_profile_cache_table: ProfileCache
+      TF_VAR_storage_provider: s3
+      TF_VAR_avatar_max_size_mb: "5"
+      TF_VAR_avatar_allowed_types: "image/jpeg,image/png,image/webp"
+    
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::460783431820:role/GitHubActionsCIRole
+          aws-region: ap-south-1
+          role-session-name: github-actions-ci
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.1.2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run lint
         run: npm run lint
 
-      - name: Run test suite 
+      - name: Run test suite
         env:
           NODE_ENV: test
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
-          DB_NAME: AwsFinanceApp
-          TEST_DB_NAME: AwsFinanceTest
+          DB_NAME: aws_serverless
+          TEST_DB_NAME: aws_serverless_test
         run: npm test
+      
+      - name: Build Docker image
+        run: docker buildx build --platform linux/amd64 --provenance=false -t aws-serverless-project:ci .
 
-      # Try building/packaging ONLY if serverless is available
-      - name: Try serverless package (optional)
-        run: |
-          npx serverless --version && npx serverless package || echo "Serverless not available or no package step."
+      - name: Check Terraform formatting
+        run: terraform -chdir=terraform fmt -check -recursive
+      
+      - name: Initialize Terraform
+        run: terraform -chdir=terraform init
+
+      - name: Validate Terraform
+        run: terraform -chdir=terraform validate
+
+      - name: Terraform plan
+        run: terraform -chdir=terraform plan -input=false -var="lambda_image_uri=460783431820.dkr.ecr.ap-south-1.amazonaws.com/aws-api-dev:dev"
 
       - name: CI completed
         run: echo "CI job completed successfully."
+
+  deploy-dev:
+    needs: basic-ci
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      TF_VAR_mongodb_uri: ${{ secrets.MONGODB_URI }}
+      TF_VAR_db_name: aws_serverless
+      TF_VAR_jwt_exp: 15m
+      TF_VAR_cloudfront_url: d3pbrmz5mjug3w.cloudfront.net
+      TF_VAR_sqs_queue_url: https://sqs.ap-south-1.amazonaws.com/460783431820/avatar-processing-dev
+      TF_VAR_profile_cache_table: ProfileCache
+      TF_VAR_storage_provider: s3
+      TF_VAR_avatar_max_size_mb: "5"
+      TF_VAR_avatar_allowed_types: "image/jpeg,image/png,image/webp"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::460783431820:role/GitHubActionsTerraformRole
+          aws-region: ap-south-1
+          role-session-name: github-actions-dev-deploy
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image URI
+        run: echo "IMAGE_URI=460783431820.dkr.ecr.ap-south-1.amazonaws.com/aws-api-dev:${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+      - name: Build Docker image
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --provenance=false \
+            -t "$IMAGE_URI" \
+            .
+
+      - name: Push Docker image to ECR
+        run: docker push "$IMAGE_URI"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.1.2
+
+      - name: Initialize Terraform
+        run: terraform -chdir=terraform init
+
+      - name: Terraform apply
+        run: |
+          terraform -chdir=terraform apply \
+            -input=false \
+            -auto-approve \
+            -var="lambda_image_uri=$IMAGE_URI"
+
+      - name: Deployment completed
+        run: echo "DEV deployment completed successfully."
+
+
+

@@ -26,16 +26,16 @@ resource "aws_apigatewayv2_integration" "api_lambda" {
 
 locals {
   api_routes = {
-    "POST /auth/login"                 = "372b1ee"
-    "PUT /admin/profile/{userId}"      = "5wft3o0"
-    "PUT /user/profile"                = "b1x3aj6"
-    "POST /user/deactivate"            = "dslzq2d"
-    "GET /admin/stats"                 = "grbiewq"
-    "DELETE /user/profile"             = "nd6s8f9"
-    "POST /auth/signup"                = "ny9wl05"
+    "POST /auth/login"                  = "372b1ee"
+    "PUT /admin/profile/{userId}"       = "5wft3o0"
+    "PUT /user/profile"                 = "b1x3aj6"
+    "POST /user/deactivate"             = "dslzq2d"
+    "GET /admin/stats"                  = "grbiewq"
+    "DELETE /user/profile"              = "nd6s8f9"
+    "POST /auth/signup"                 = "ny9wl05"
     "POST /user/avatar/upload-complete" = "qn4478d"
-    "POST /user/avatar/upload-url"     = "vpucpgp"
-    "GET /user/profile"                = "x5ahwvo"
+    "POST /user/avatar/upload-url"      = "vpucpgp"
+    "GET /user/profile"                 = "x5ahwvo"
   }
 }
 

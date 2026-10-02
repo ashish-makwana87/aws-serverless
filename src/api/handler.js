@@ -4,6 +4,7 @@ import { errorHandler } from "../utils/response.js";
 import { routes } from "./routes/index.js";
 
 export const handler = async (event) => {
+
   try {
     await loadSecrets();
     const path = event.requestContext.http.path;

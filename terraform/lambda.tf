@@ -1,46 +1,27 @@
-data "archive_file" "lambda_zip" {
-  type        = "zip"
-  source_dir  = "${path.module}/.."
-  output_path = "${path.module}/build/lambda.zip"
+resource "aws_ecr_repository" "app" {
+  name = "${var.service_name}-${var.environment}"
 
-  excludes = [
-    "layer/*",
-    ".git/*",
-    ".github/*",
-    ".vscode/*",
-    "terraform/*",
-    "tests/*",
-    "docs/*",
-    ".serverless/*",
-    "*.tfstate",
-    "*.tfstate.backup",
-    ".terraform/*",
-    ".terraform.lock.hcl",
-    "README.md",
-    ".env",
-    "jest.config.js",
-    "jsconfig.json",
-    "test-invoke.js",
-    "package-lock.json",
-    ".gitignore"
-  ]
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = local.common_tags
 }
 
 resource "aws_lambda_function" "api_lambda" {
 
   function_name = "${var.service_name}-${var.environment}-apiLambda"
 
-  filename         = data.archive_file.lambda_zip.output_path
-  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  package_type = "Image"
+  image_uri    = var.lambda_image_uri
+
+  image_config {
+    command = ["src/api/handler.handler"]
+  }
 
   role = aws_iam_role.lambda_role.arn
 
-  handler = "src/api/handler.handler"
-
-  runtime = "nodejs22.x"
-
-  timeout = 6
-
+  timeout     = 6
   memory_size = 1024
 
   environment {
@@ -58,7 +39,7 @@ resource "aws_lambda_function" "api_lambda" {
       AVATAR_MAX_SIZE_MB   = var.avatar_max_size_mb
       AVATAR_ALLOWED_TYPES = var.avatar_allowed_types
 
-      SECRET_NAME = "aws-serverless-project/dev"
+      SECRET_NAME = "aws-serverless/dev"
     }
   }
 
@@ -70,19 +51,16 @@ resource "aws_lambda_function" "image_resize" {
 
   function_name = "${var.service_name}-${var.environment}-imageResize"
 
-  filename         = data.archive_file.lambda_zip.output_path
-  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  package_type = "Image"
+  image_uri    = var.lambda_image_uri
+
+  image_config {
+    command = ["src/functions/imageResizeHandler.handler"]
+  }
 
   role = aws_iam_role.lambda_role.arn
 
-  handler = "src/functions/imageResizeHandler.handler"
-
-  runtime = "nodejs22.x"
-
-  layers = [aws_lambda_layer_version.sharp_layer.arn]
-
-  timeout = 6
-
+  timeout     = 6
   memory_size = 1024
 
   environment {
@@ -100,33 +78,13 @@ resource "aws_lambda_function" "image_resize" {
       AVATAR_MAX_SIZE_MB   = var.avatar_max_size_mb
       AVATAR_ALLOWED_TYPES = var.avatar_allowed_types
 
-      SECRET_NAME = "aws-serverless-project/dev"
+      SECRET_NAME = "aws-serverless/dev"
     }
   }
 
   tags = local.common_tags
 }
 
-data "archive_file" "sharp_layer" {
-  type        = "zip"
-  source_dir  = "${path.module}/../layer"
-  output_path = "${path.module}/sharp-layer.zip"
-
-  excludes = [
-    "nodejs/node_modules/.bin/*"
-  ]
-}
-
-resource "aws_lambda_layer_version" "sharp_layer" {
-  layer_name          = "sharp"
-  filename            = data.archive_file.sharp_layer.output_path
-  source_code_hash    = data.archive_file.sharp_layer.output_base64sha256
-  compatible_runtimes = ["nodejs22.x"]
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
 
 resource "aws_lambda_event_source_mapping" "image_resize_sqs" {
   event_source_arn = data.aws_sqs_queue.avatar_processing.arn
