@@ -13,17 +13,6 @@ jest.unstable_mockModule("../../src/utils/tokenUtils.js", () => ({
   }),
 }));
 
-jest.unstable_mockModule(
-  "../../src/repositories/profileCacheRepository.js",
-  () => ({
-    profileCacheRepository: {
-      get: jest.fn().mockResolvedValue(null),
-      put: jest.fn().mockResolvedValue(undefined),
-      delete: jest.fn().mockResolvedValue(undefined),
-    },
-  }),
-);
-
 jest.unstable_mockModule("../../src/config/secrets.js", () => ({
   loadSecrets: jest.fn().mockResolvedValue({
     jwtSecret: "test-secret",
@@ -32,6 +21,17 @@ jest.unstable_mockModule("../../src/config/secrets.js", () => ({
     jwtSecret: "test-secret",
   })),
 }));
+
+jest.unstable_mockModule(
+  "../../src/repositories/dynamoProfileCacheRepository.js",
+  () => ({
+    createDynamoProfileCacheRepository: jest.fn(() => ({
+      get: jest.fn().mockResolvedValue(null),
+      put: jest.fn().mockResolvedValue(undefined),
+      delete: jest.fn().mockResolvedValue(undefined),
+    })),
+  }),
+);
 
 const { handler } = await import("../../src/api/handler.js");
 
@@ -75,6 +75,9 @@ describe("Profile API integration tests", () => {
     });
 
     const response = await handler(event);
+
+    console.log("GET response status:", response.statusCode);
+    console.log("GET response body:", response.body);
 
     expect(response.statusCode).toBe(200);
 

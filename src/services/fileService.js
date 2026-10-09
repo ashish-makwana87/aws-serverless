@@ -1,8 +1,7 @@
+import { profileService, s3Utils } from "../config/container.js";
 import { storageConfig } from "../config/storageConfig.js";
 import { activityLogger } from "../utils/activityLogger.js";
 import { BadRequestError } from "../utils/httpErrors.js";
-import { generateUploadURL } from "../utils/s3Utils.js";
-import { profileService } from "./profileService.js";
 
 export const fileService = {
   createAvatarUpload: async (userId, fileType) => {
@@ -20,7 +19,7 @@ export const fileService = {
     const avatarKey = `${userId}-${Date.now()}`;
     const s3Key = `avatars/original/${avatarKey}`;
 
-    const uploadURL = await generateUploadURL({
+    const uploadURL = await s3Utils.generateUploadURL({
       key: s3Key,
       contentType: fileType,
       maxSizeMB: storageConfig.avatar.maxSizeMB,

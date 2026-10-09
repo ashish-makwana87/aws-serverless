@@ -55,7 +55,7 @@ resource "aws_lambda_function" "image_resize" {
   image_uri    = var.lambda_image_uri
 
   image_config {
-    command = ["src/functions/imageResizeHandler.handler"]
+    command = ["src/handlers/imageResizeHandler.handler"]
   }
 
   role = aws_iam_role.lambda_role.arn

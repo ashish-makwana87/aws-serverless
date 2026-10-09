@@ -1,4 +1,4 @@
-import { profileService } from "../../services/profileService.js";
+import { profileService } from "../../config/container.js";
 import { success } from "../../utils/response.js";
 
 export const adminUpdateProfileController = async (event) => {

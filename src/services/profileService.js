@@ -1,19 +1,24 @@
 import { userProfileRepository } from "../repositories/userProfileRepository.js";
 import { userProfileModel } from "../models/userProfileModel.js";
-import { deleteAvatarObjects } from "../utils/s3Utils.js";
 import { activityLogger } from "../utils/activityLogger.js";
-import { publishImageProcessingJob } from "../utils/sqsUtils.js";
-import { profileCacheRepository } from "../repositories/profileCacheRepository.js";
 import { NotFoundError } from "../utils/httpErrors.js";
 
-export const profileService = {
+
+export const createProfileService = ({
+  dynamoProfileCacheRepository,
+  s3Utils,
+  sqsUtils,
+  cloudFrontUrl,
+  avatarBucket,
+}) => ({
   getProfile: async (userId) => {
+    
     // Checking cache
-    let profile = await profileCacheRepository.get(userId);
+    let profile = await dynamoProfileCacheRepository.get(userId);
 
     if (profile) {
       if (profile.avatarKey) {
-        profile.avatarUrl = `${process.env.CLOUDFRONT_URL}/avatars/optimized/${profile.avatarKey}.webp`;
+        profile.avatarUrl = `${cloudFrontUrl}/avatars/optimized/${profile.avatarKey}.webp`;
       } else {
         profile.avatarUrl = null;
       }
@@ -30,10 +35,10 @@ export const profileService = {
     }
 
     // Store in cache
-    await profileCacheRepository.put(profile);
+    await dynamoProfileCacheRepository.put(profile);
 
     if (profile.avatarKey) {
-      profile.avatarUrl = `${process.env.CLOUDFRONT_URL}/avatars/optimized/${profile.avatarKey}.webp`;
+      profile.avatarUrl = `${cloudFrontUrl}/avatars/optimized/${profile.avatarKey}.webp`;
     } else {
       profile.avatarUrl = null;
     }
@@ -52,7 +57,7 @@ export const profileService = {
     await userProfileRepository.update(userId, data);
 
     // Invalidate cache
-    await profileCacheRepository.delete(userId);
+    await dynamoProfileCacheRepository.delete(userId);
 
     await activityLogger.logProfileUpdate({ userId, updatedFields });
 
@@ -63,7 +68,7 @@ export const profileService = {
     await userProfileRepository.delete(userId);
 
     // Remove cache
-    await profileCacheRepository.delete(userId);
+    await dynamoProfileCacheRepository.delete(userId);
 
     return { message: "Profile deleted" };
   },
@@ -74,7 +79,7 @@ export const profileService = {
     await userProfileRepository.updateAvatarKey(userId, avatarKey);
 
     // Remove cache
-    await profileCacheRepository.delete(userId);
+    await dynamoProfileCacheRepository.delete(userId);
   },
 
   cleanupOldAvatar: async (userId) => {
@@ -83,7 +88,7 @@ export const profileService = {
     const profile = await userProfileRepository.findByUserId(userId);
     if (!profile || !profile.avatarKey) return;
 
-    await deleteAvatarObjects(profile.avatarKey);
+    await s3Utils.deleteAvatarObjects(profile.avatarKey);
 
     await activityLogger.logAvatarDeleted({
       userId,
@@ -92,10 +97,10 @@ export const profileService = {
   },
 
   uploadComplete: async (userId, key) => {
-    await publishImageProcessingJob({
-      bucket: process.env.AVATAR_BUCKET,
+    await sqsUtils.publishImageProcessingJob({
+      bucket: avatarBucket,
       key,
       userId,
     });
   },
-};
+});

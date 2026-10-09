@@ -9,7 +9,7 @@ on:
       - opened
       - synchronize
       - reopened
-    branches: 
+    branches:
       - main
 
 jobs:
@@ -59,18 +59,31 @@ jobs:
 
       - name: Run test suite
         env:
+          # MongoDB integration tests
           NODE_ENV: test
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           DB_NAME: aws_serverless
           TEST_DB_NAME: aws_serverless_test
+
+          # Application configuration
+          AWS_REGION: ap-south-1
+          SECRET_NAME: aws-serverless/dev
+          JWT_EXP: 15m
+          AVATAR_BUCKET: aws-user-avatar-ashmakk
+          AVATAR_MAX_SIZE_MB: "5"
+          AVATAR_ALLOWED_TYPES: "image/jpeg,image/png,image/webp"
+          CLOUDFRONT_URL: d3pbrmz5mjug3w.cloudfront.net
+          SQS_QUEUE_URL: https://sqs.ap-south-1.amazonaws.com/460783431820/avatar-processing-dev
+          PROFILE_CACHE_TABLE: ProfileCache
+          STORAGE_PROVIDER: s3
         run: npm test
-      
+
       - name: Build Docker image
         run: docker buildx build --platform linux/amd64 --provenance=false -t aws-serverless-project:ci .
 
       - name: Check Terraform formatting
         run: terraform -chdir=terraform fmt -check -recursive
-      
+
       - name: Initialize Terraform
         run: terraform -chdir=terraform init
 

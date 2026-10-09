@@ -1,5 +1,6 @@
+import { profileService } from "../../config/container.js";
 import { success } from "../../utils/response.js";
-import { profileService } from "../../services/profileService.js";
+
 
 export const getProfileController = async (event) => {
   

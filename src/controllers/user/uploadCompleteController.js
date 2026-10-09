@@ -1,5 +1,5 @@
-import { profileService } from "../../services/profileService.js";
 import { success } from "../../utils/response.js";
+import { profileService } from "../../config/container.js";
 
 export const uploadCompleteController = async (event) => {
   const { key } = event.validatedBody;
