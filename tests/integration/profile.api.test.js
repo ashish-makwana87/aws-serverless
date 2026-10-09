@@ -22,6 +22,17 @@ jest.unstable_mockModule("../../src/config/secrets.js", () => ({
   })),
 }));
 
+jest.unstable_mockModule(
+  "../../src/repositories/dynamoProfileCacheRepository.js",
+  () => ({
+    createDynamoProfileCacheRepository: jest.fn(() => ({
+      get: jest.fn().mockResolvedValue(null),
+      put: jest.fn().mockResolvedValue(undefined),
+      delete: jest.fn().mockResolvedValue(undefined),
+    })),
+  }),
+);
+
 const { handler } = await import("../../src/api/handler.js");
 
 const { userProfileModel } =
@@ -64,6 +75,9 @@ describe("Profile API integration tests", () => {
     });
 
     const response = await handler(event);
+
+    console.log("GET response status:", response.statusCode);
+    console.log("GET response body:", response.body);
 
     expect(response.statusCode).toBe(200);
 
