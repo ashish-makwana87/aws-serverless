@@ -72,9 +72,9 @@ jobs:
           AVATAR_BUCKET: ci-test-avatar-bucket
           AVATAR_MAX_SIZE_MB: "5"
           AVATAR_ALLOWED_TYPES: "image/jpeg,image/png,image/webp"
-          CLOUDFRONT_URL: ddddffff.cloudfront.net
+          CLOUDFRONT_URL: d3pbrmz5mjug3w.cloudfront.net
           SQS_QUEUE_URL: https://sqs.ap-south-1.amazonaws.com/000000000000/ci-test-queue
-          PROFILE_CACHE_TABLE: ci-test-profile-cache
+          PROFILE_CACHE_TABLE: ProfileCache
           STORAGE_PROVIDER: s3
         run: npm test
 

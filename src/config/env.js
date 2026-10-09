@@ -11,7 +11,7 @@ const envSchema = z.object({
 
   AWS_REGION: z.string().min(1).default("ap-south-1"),
 
-  SECRET_NAME: z.string().min(1),
+  SECRET_NAME: z.string().min(1).optional(),
 
   AWS_ENDPOINT: z.url().optional().or(z.literal("")),
   
