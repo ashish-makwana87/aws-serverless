@@ -1,38 +1,31 @@
 import {
-  SecretsManagerClient,
   GetSecretValueCommand,
 } from "@aws-sdk/client-secrets-manager";
-
-const client = new SecretsManagerClient({
-  region: process.env.AWS_REGION,
-});
+import { env } from "./env.js";
+import { secretsManagerClient } from "./awsClients.js";
 
 let cachedSecrets = null;
 
 export const loadSecrets = async () => {
   
- // Prevent repeated calls during warm invocations
+  // Prevent repeated calls during warm invocations
   if (cachedSecrets) {
     return cachedSecrets;
   }
-  
-   if (!process.env.SECRET_NAME) {
-    throw new Error("SECRET_NAME environment variable is missing.");
-  }
 
   try {
-   const command = new GetSecretValueCommand({
-    SecretId: process.env.SECRET_NAME,
+    const command = new GetSecretValueCommand({
+    SecretId: env.SECRET_NAME,
   });
 
-  const response = await client.send(command);
+  const response = await secretsManagerClient.send(command);
 
   cachedSecrets = JSON.parse(response.SecretString);
 
   return cachedSecrets;
   } catch (error) {
     console.error("Failed to load secrets from AWS Secrets Manager", {
-      secretName: process.env.SECRET_NAME,
+      secretName: env.SECRET_NAME,
       message: error.message,
       stack: error.stack,
     });

@@ -6,3 +6,4 @@ locals {
     STAGE       = var.environment
   }
 }
+

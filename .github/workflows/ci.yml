@@ -9,7 +9,7 @@ on:
       - opened
       - synchronize
       - reopened
-    branches: 
+    branches:
       - main
 
 jobs:
@@ -64,13 +64,13 @@ jobs:
           DB_NAME: aws_serverless
           TEST_DB_NAME: aws_serverless_test
         run: npm test
-      
+
       - name: Build Docker image
         run: docker buildx build --platform linux/amd64 --provenance=false -t aws-serverless-project:ci .
 
       - name: Check Terraform formatting
         run: terraform -chdir=terraform fmt -check -recursive
-      
+
       - name: Initialize Terraform
         run: terraform -chdir=terraform init
 

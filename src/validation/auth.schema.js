@@ -15,3 +15,4 @@ export const loginSchema = z.object({
     .min(1, { message: "Password is required" })
     .max(25, { message: "Password limit is 25 characters" }),
 });
+

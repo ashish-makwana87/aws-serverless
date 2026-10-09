@@ -1,17 +1,6 @@
 import { jest } from "@jest/globals";
 
 jest.unstable_mockModule(
-  "../../src/repositories/profileCacheRepository.js",
-  () => ({
-    profileCacheRepository: {
-      get: jest.fn().mockResolvedValue(null),
-      put: jest.fn().mockResolvedValue(undefined),
-      delete: jest.fn().mockResolvedValue(undefined),
-    },
-  }),
-);
-
-jest.unstable_mockModule(
   "../../src/repositories/userProfileRepository.js",
   () => ({
     userProfileRepository: {
@@ -30,10 +19,6 @@ jest.unstable_mockModule("../../src/models/userProfileModel.js", () => ({
   },
 }));
 
-jest.unstable_mockModule("../../src/utils/s3Utils.js", () => ({
-  deleteAvatarObjects: jest.fn(),
-}));
-
 jest.unstable_mockModule("../../src/utils/activityLogger.js", () => ({
   activityLogger: {
     logProfileUpdate: jest.fn(),
@@ -41,13 +26,35 @@ jest.unstable_mockModule("../../src/utils/activityLogger.js", () => ({
   },
 }));
 
-const { profileService } = await import("../../src/services/profileService.js");
+const { createProfileService } =
+  await import("../../src/services/profileService.js");
 const { userProfileRepository } =
   await import("../../src/repositories/userProfileRepository.js");
 const { userProfileModel } =
   await import("../../src/models/userProfileModel.js");
-const { deleteAvatarObjects } = await import("../../src/utils/s3Utils.js");
 const { activityLogger } = await import("../../src/utils/activityLogger.js");
+
+const dynamoProfileCacheRepository = {
+  get: jest.fn().mockResolvedValue(null),
+  put: jest.fn().mockResolvedValue(undefined),
+  delete: jest.fn().mockResolvedValue(undefined),
+};
+
+const s3Utils = {
+  deleteAvatarObjects: jest.fn().mockResolvedValue(undefined),
+};
+
+const sqsUtils = {
+  publishImageProcessingJob: jest.fn().mockResolvedValue(undefined),
+};
+
+const profileService = createProfileService({
+  dynamoProfileCacheRepository,
+  s3Utils,
+  sqsUtils,
+  cloudFrontUrl: "https://test-cloudfront.example.com",
+  avatarBucket: "test-bucket",
+});
 
 describe("profileService", () => {
   beforeEach(() => {
@@ -62,8 +69,9 @@ describe("profileService", () => {
     it("returns existing profile if found", async () => {
       const userId = "user-1";
       const profile = { userId, firstName: "Ashish" };
-
-      userProfileRepository.findByUserId.mockResolvedValue(profile);
+      jest
+        .mocked(userProfileRepository.findByUserId)
+        .mockResolvedValue(profile);
 
       const result = await profileService.getProfile(userId);
 
@@ -76,8 +84,10 @@ describe("profileService", () => {
       const userId = "user-2";
       const defaultProfile = { userId };
 
-      userProfileRepository.findByUserId.mockResolvedValue(null);
-      userProfileModel.defaultProfile.mockReturnValue(defaultProfile);
+      jest.mocked(userProfileRepository.findByUserId).mockResolvedValue(null);
+      jest
+        .mocked(userProfileModel.defaultProfile)
+        .mockReturnValue(defaultProfile);
 
       const result = await profileService.getProfile(userId);
 
@@ -97,8 +107,10 @@ describe("profileService", () => {
       const profile = { userId, firstName: "Ashish" };
       const data = { firstName: "Ashish", phone: "123" };
 
-      userProfileRepository.findByUserId.mockResolvedValue(profile);
-      userProfileRepository.update.mockResolvedValue({});
+      jest
+        .mocked(userProfileRepository.findByUserId)
+        .mockResolvedValue(profile);
+      jest.mocked(userProfileRepository.update).mockResolvedValue({});
       activityLogger.logProfileUpdate.mockResolvedValue();
 
       const result = await profileService.updateProfile(userId, data);
@@ -117,11 +129,11 @@ describe("profileService", () => {
       const userId = "user-3";
       const profile = { userId, firstName: "Ashish" };
 
-      userProfileRepository.findByUserId.mockResolvedValue(null);
+      jest.mocked(userProfileRepository.findByUserId).mockResolvedValue(null);
 
-      await expect(profileService.updateProfile(userId, profile)).rejects.toThrow(
-        "Profile not found",
-      );
+      await expect(
+        profileService.updateProfile(userId, profile),
+      ).rejects.toThrow("Profile not found");
     });
   });
 
@@ -133,7 +145,7 @@ describe("profileService", () => {
     it("deletes profile", async () => {
       const userId = "user-4";
 
-      userProfileRepository.delete.mockResolvedValue({});
+      jest.mocked(userProfileRepository.delete).mockResolvedValue({});
 
       const result = await profileService.deleteProfile(userId);
 
@@ -151,7 +163,7 @@ describe("profileService", () => {
       const userId = "user-5";
       const avatarKey = "avatar-123";
 
-      userProfileRepository.updateAvatarKey.mockResolvedValue({});
+      jest.mocked(userProfileRepository.updateAvatarKey).mockResolvedValue({});
 
       await profileService.updateAvatarKey(userId, avatarKey);
 
@@ -177,13 +189,15 @@ describe("profileService", () => {
       const userId = "user-6";
       const profile = { avatarKey: "old-avatar" };
 
-      userProfileRepository.findByUserId.mockResolvedValue(profile);
-      deleteAvatarObjects.mockResolvedValue();
+      jest
+        .mocked(userProfileRepository.findByUserId)
+        .mockResolvedValue(profile);
+      s3Utils.deleteAvatarObjects.mockResolvedValue();
       activityLogger.logAvatarDeleted.mockResolvedValue();
 
       await profileService.cleanupOldAvatar(userId);
 
-      expect(deleteAvatarObjects).toHaveBeenCalledWith("old-avatar");
+      expect(s3Utils.deleteAvatarObjects).toHaveBeenCalledWith("old-avatar");
 
       expect(activityLogger.logAvatarDeleted).toHaveBeenCalledWith({
         userId,
@@ -192,20 +206,20 @@ describe("profileService", () => {
     });
 
     it("does nothing if profile does not exist", async () => {
-      userProfileRepository.findByUserId.mockResolvedValue(null);
+      jest.mocked(userProfileRepository.findByUserId).mockResolvedValue(null);
 
       await profileService.cleanupOldAvatar("user-7");
 
-      expect(deleteAvatarObjects).not.toHaveBeenCalled();
+      expect(s3Utils.deleteAvatarObjects).not.toHaveBeenCalled();
       expect(activityLogger.logAvatarDeleted).not.toHaveBeenCalled();
     });
 
     it("does nothing if profile has no avatarKey", async () => {
-      userProfileRepository.findByUserId.mockResolvedValue({});
+      jest.mocked(userProfileRepository.findByUserId).mockResolvedValue({});
 
       await profileService.cleanupOldAvatar("user-8");
 
-      expect(deleteAvatarObjects).not.toHaveBeenCalled();
+      expect(s3Utils.deleteAvatarObjects).not.toHaveBeenCalled();
       expect(activityLogger.logAvatarDeleted).not.toHaveBeenCalled();
     });
   });

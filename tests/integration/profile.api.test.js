@@ -13,17 +13,6 @@ jest.unstable_mockModule("../../src/utils/tokenUtils.js", () => ({
   }),
 }));
 
-jest.unstable_mockModule(
-  "../../src/repositories/profileCacheRepository.js",
-  () => ({
-    profileCacheRepository: {
-      get: jest.fn().mockResolvedValue(null),
-      put: jest.fn().mockResolvedValue(undefined),
-      delete: jest.fn().mockResolvedValue(undefined),
-    },
-  }),
-);
-
 jest.unstable_mockModule("../../src/config/secrets.js", () => ({
   loadSecrets: jest.fn().mockResolvedValue({
     jwtSecret: "test-secret",
