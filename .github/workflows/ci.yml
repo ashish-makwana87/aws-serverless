@@ -69,11 +69,11 @@ jobs:
           AWS_REGION: ap-south-1
           SECRET_NAME: aws-serverless/dev
           JWT_EXP: 15m
-          AVATAR_BUCKET: ci-test-avatar-bucket
+          AVATAR_BUCKET: aws-user-avatar-ashmakk
           AVATAR_MAX_SIZE_MB: "5"
           AVATAR_ALLOWED_TYPES: "image/jpeg,image/png,image/webp"
           CLOUDFRONT_URL: d3pbrmz5mjug3w.cloudfront.net
-          SQS_QUEUE_URL: https://sqs.ap-south-1.amazonaws.com/000000000000/ci-test-queue
+          SQS_QUEUE_URL: https://sqs.ap-south-1.amazonaws.com/460783431820/avatar-processing-dev
           PROFILE_CACHE_TABLE: ProfileCache
           STORAGE_PROVIDER: s3
         run: npm test
