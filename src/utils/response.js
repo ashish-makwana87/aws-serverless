@@ -6,6 +6,14 @@ export function success(data) {
   };
 }
 
+export function created(data) {
+  return {
+    statusCode: 201,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  };
+}
+
 export function errorHandler(err) {
  
   const status = err.statusCode || 500; 

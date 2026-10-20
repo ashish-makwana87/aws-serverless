@@ -26,9 +26,10 @@ resource "aws_lambda_function" "api_lambda" {
 
   environment {
     variables = {
-      MONGODB_URI = var.mongodb_uri
-      DB_NAME     = var.db_name
-      JWT_EXP     = var.jwt_exp
+      MONGODB_URI  = var.mongodb_uri
+      SUPABASE_URI = var.supabase_uri
+      DB_NAME      = var.db_name
+      JWT_EXP      = var.jwt_exp
 
       AVATAR_BUCKET       = data.aws_s3_bucket.avatar_bucket.bucket
       CLOUDFRONT_URL      = var.cloudfront_url

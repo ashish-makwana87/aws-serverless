@@ -11,6 +11,9 @@ import {
   createDynamoProfileCacheRepository,
 } from "../repositories/dynamoProfileCacheRepository.js";
 import { imageResizeProcessor } from "../handlers/imageResizeProcessor.js";
+import { getOrdersPool } from "../libs/postgres.js";
+import { orderRepository } from "../repositories/orderRepository.js";
+import { createOrderService } from "../services/orderService.js";
 
 const s3Utils = createS3Utils({
   s3Client,
@@ -36,6 +39,11 @@ const profileService = createProfileService({
 });
 
 
+const orderService = createOrderService({
+  orderRepository,
+  getOrdersPool,
+});
+
 const imageResizeHandler = imageResizeProcessor({s3Client, profileService});
 
 export {
@@ -43,6 +51,7 @@ export {
   sqsUtils,
   dynamoProfileCacheRepository,
   profileService,
+  orderService,
   imageResizeHandler
 };
 

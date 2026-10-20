@@ -4,7 +4,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["dev", "test", "prod"]).default("dev"),
 
   MONGODB_URI: z.string().min(1),
-
+  SUPABASE_URI: z.string().min(1),
   DB_NAME: z.string().min(1),
 
   TEST_DB_NAME: z.string().min(1).optional(),
