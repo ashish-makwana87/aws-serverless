@@ -63,6 +63,7 @@ jobs:
           # MongoDB integration tests
           NODE_ENV: test
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          SUPABASE_URI: ${{ secrets.SUPABASE_URI }}
           DB_NAME: aws_serverless
           TEST_DB_NAME: aws_serverless_test
 
