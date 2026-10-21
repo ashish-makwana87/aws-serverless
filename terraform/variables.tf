@@ -25,6 +25,13 @@ variable "environment" {
 variable "mongodb_uri" {
   type        = string
   description = "MongoDB connection string"
+  sensitive   = true
+}
+
+variable "supabase_uri" {
+  type        = string
+  description = "Supabase connection string"
+  sensitive   = true
 }
 
 variable "db_name" {

@@ -1,4 +1,5 @@
 {
   "js/ts.preferences.importModuleSpecifier": "relative",
-  "js/ts.preferences.importModuleSpecifierEnding": "js"
+  "js/ts.preferences.importModuleSpecifierEnding": "js",
+  "cSpell.words": ["Supabase"]
 }

@@ -5,13 +5,15 @@ const envSchema = z.object({
 
   MONGODB_URI: z.string().min(1),
 
+  SUPABASE_URI: z.string().min(1),
+  
   DB_NAME: z.string().min(1),
 
   TEST_DB_NAME: z.string().min(1).optional(),
 
   AWS_REGION: z.string().min(1).default("ap-south-1"),
 
-  SECRET_NAME: z.string().min(1).optional(),
+  SECRET_NAME: z.string().min(1),
 
   AWS_ENDPOINT: z.url().optional().or(z.literal("")),
   

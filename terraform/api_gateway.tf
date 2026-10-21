@@ -36,6 +36,9 @@ locals {
     "POST /user/avatar/upload-complete" = "qn4478d"
     "POST /user/avatar/upload-url"      = "vpucpgp"
     "GET /user/profile"                 = "x5ahwvo"
+
+    # Orders API
+    "POST /api/v1/orders" = "orders001"
   }
 }
 

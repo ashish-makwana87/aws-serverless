@@ -1,0 +1,30 @@
+
+services:
+  orders-postgres:
+    image: postgres:17-alpine
+    container_name: aws-orders-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${ORDERS_PG_DB:-aws_orders_db}
+      POSTGRES_USER: ${ORDERS_PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${ORDERS_PG_PASSWORD:?Add ORDERS_PG_PASSWORD to .env}
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - orders_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  orders_postgres_data:
